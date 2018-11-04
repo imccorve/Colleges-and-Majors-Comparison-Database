@@ -1,0 +1,77 @@
+CREATE TABLE State(StateID INT(11))
+	SELECT DISTINCT STABBR AS StateAbbreviation
+	FROM scores;
+
+CREATE TABLE City(CityName VARCHAR(255), latitude FLOAT(11), longitude FLOAT(11), StateID INT(11))
+	SELECT DISTINCT scores.City AS CityName, Round(scores.latitude, 0) AS latitude, Round(scores.longitude, 0) AS longitude, State.StateID
+	FROM scores, State
+	WHERE scores.STABBR = State.`StateAbbreviation`;
+ALTER TABLE City ADD COLUMN CityID INT(11);
+
+CREATE TABLE School(SchoolName VARCHAR(255))
+	SELECT DISTINCT scores.INSTNM as SchoolName
+	FROM scores;
+ALTER TABLE School ADD COLUMN SchoolID INT(11);
+
+CREATE TABLE Major AS
+    SELECT Majorid AS MajorID, Undergraduate_Major AS MajorName
+    FROM degrees_that_pay_back;
+
+CREATE TABLE MajorStartingToMidCareer AS
+	SELECT Majorid AS MajorID, Starting_Median_Salary AS StartingMedianSalary,
+	Mid_Career_Median_Salary AS MidCareerMedianSalary,
+	Percent_change_from_Starting_to_Mid_Career_Salary AS PercentChangeFromStartingToMidCareer
+	FROM degrees_that_pay_back;
+
+CREATE TABLE MajorMidCareerPercentile AS
+	SELECT Majorid AS MajorID, Mid_Career_10th_Percentile_Salary AS MidCareer10thPercentile,
+	Mid_Career_25th_Percentile_Salary AS MidCareer25thPercentile,
+	Mid_Career_75th_Percentile_Salary AS MidCareer75thPercentile,
+	Mid_Career_90th_Percentile_Salary AS MidCareer90thPercentile
+	FROM degrees_that_pay_back;
+
+CREATE TABLE SchoolType AS
+    SELECT SchoolID, School_Type  AS SchoolType
+    FROM School, salaries_by_college_type
+    WHERE School.SchoolName = salaries_by_college_type.School_Name;
+
+CREATE TABLE SchoolStartingToMidCareer AS
+	SELECT SchoolID, Starting_Median_Salary AS StartingMedian, Mid_Career_Median_Salary  AS Mid-CareerMedian
+	FROM School, salaries_by_college_type
+	WHERE School.SchoolName = salaries_by_college_type.School_Name;
+
+CREATE TABLE SchoolMidCareerPercentile AS
+    SELECT  Mid_Career_10th_Percentile_Salary AS MidCareer10thPercentile,
+     Mid_Career_25th_Percentile_Salary AS MidCareer25thPercentile,
+     Mid_Career_75th_Percentile_Salary AS MidCareer75thPercentile,
+     Mid_Career_90th_Percentile_Salary AS  MidCareer90thPercentile
+    FROM School, salaries_by_college_type
+    WHERE School.SchoolName = salaries_by_college_type.School_Name;
+
+CREATE TABLE SchoolLocation AS
+	SELECT School.SchoolID, Region.RegionID,City.CityID,scores.ZIP AS ZipCode, State.StateID
+	FROM School,scores,City,State,salaries_by_region,Region
+	WHERE  School.SchoolName = scores.INSTNM AND
+	Region.RegionName = salaries_by_region.Region AND
+	City.CityName=scores.CITY AND
+	State.StateAbbreviation = scores.STABBR;
+
+CREATE TABLE Admission (SchoolID INT(11), AdmissionRate DECIMAL(10,1))
+	SELECT School.SchoolID AS SchoolID, scores.ADM_RATE AS AdmissionRate
+	FROM School, scores
+	WHERE School.SchoolName = scores.INSTNM;
+
+CREATE TABLE SATScore (SchoolID INT(11), SATAVG INT(11))
+	SELECT School.SchoolID AS SchoolID, scores.SAT_AVG AS SATAVG
+	FROM School, scores
+	WHERE School.SchoolName = scores.INSTNM;
+
+CREATE TABLE AccredAgency (SchoolID INT(11), AccrAgencyName VARCHAR(255))
+	SELECT School.SchoolID AS SchoolID, scores.AccredAgency AS AccrAgencyName
+	FROM scores, School
+	WHERE scores.INSTNM = School.SchoolName;
+
+CREATE TABLE Region AS
+	SELECT DISTINCT Region AS RegionName
+	FROM salaries_by_region;
+ALTER TABLE Region ADD COLUMN RegionID INT(11);
